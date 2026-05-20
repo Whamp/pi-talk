@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { startProgress } from "./progress.mjs";
 
 const execFileAsync = promisify(execFile);
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,10 +27,11 @@ async function main() {
   mkdirSync(runtimeDir, { recursive: true });
   mkdirSync(modelCacheDir, { recursive: true });
 
-  await run("uv", ["venv", "--python", pythonVersion, venvDir]);
+  await run("uv", ["venv", "--clear", "--python", pythonVersion, venvDir]);
   await run("uv", ["pip", "install", "--python", venvPythonPath(venvDir), `supertonic[serve]==${supertonicVersion}`]);
   await run(venvExecutablePath(venvDir, "supertonic"), ["download"], {
     env: { ...process.env, SUPERTONIC_CACHE_DIR: modelCacheDir },
+    progressLabel: "Downloading Supertonic model (~385 MiB)",
   });
 
   writeFileSync(
@@ -51,7 +53,50 @@ async function main() {
 
 async function run(command, args, options = {}) {
   console.log(`[pi-talk setup] ${command} ${args.join(" ")}`);
-  await execFileAsync(command, args, { stdio: "inherit", env: options.env });
+  if (options.progressLabel) {
+    console.log("[pi-talk setup] First install may take about a minute while Supertonic model files download.");
+    await runWithProgress(command, args, options);
+    return;
+  }
+  await runStreaming(command, args, options);
+}
+
+async function runStreaming(command, args, options = {}) {
+  await new Promise((resolve, reject) => {
+    const child = spawn(command, args, { env: options.env, stdio: "inherit" });
+    child.on("error", reject);
+    child.on("close", (code, signal) => {
+      if (code === 0) resolve(undefined);
+      else reject(new Error(`${command} ${args.join(" ")} failed with ${signal ? `signal ${signal}` : `exit code ${code}`}`));
+    });
+  });
+}
+
+async function runWithProgress(command, args, options) {
+  await new Promise((resolve, reject) => {
+    const progress = startProgress(options.progressLabel);
+    const child = spawn(command, args, { env: options.env, stdio: ["ignore", "pipe", "pipe"] });
+    const chunks = [];
+
+    child.stdout?.on("data", (chunk) => chunks.push(chunk));
+    child.stderr?.on("data", (chunk) => chunks.push(chunk));
+    child.on("error", (error) => {
+      progress.stop(`${options.progressLabel} failed`);
+      reject(error);
+    });
+    child.on("close", (code, signal) => {
+      if (code === 0) {
+        progress.stop(`${options.progressLabel} complete`);
+        resolve(undefined);
+        return;
+      }
+
+      progress.stop(`${options.progressLabel} failed`);
+      const output = Buffer.concat(chunks).toString("utf8").trim();
+      if (output) console.error(output);
+      reject(new Error(`${command} ${args.join(" ")} failed with ${signal ? `signal ${signal}` : `exit code ${code}`}`));
+    });
+  });
 }
 
 async function commandExists(command) {

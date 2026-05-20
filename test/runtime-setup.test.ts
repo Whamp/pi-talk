@@ -59,7 +59,7 @@ describe("Complete Package Setup", () => {
 
     expect(madeDirs).toEqual([join(packageRoot, ".pi-talk-runtime"), modelCacheDir]);
     expect(commands.map(({ command, args }) => ({ command, args }))).toEqual([
-      { command: "uv", args: ["venv", "--python", "3.12", join(packageRoot, ".pi-talk-runtime", "venv")] },
+      { command: "uv", args: ["venv", "--clear", "--python", "3.12", join(packageRoot, ".pi-talk-runtime", "venv")] },
       {
         command: "uv",
         args: ["pip", "install", "--python", join(packageRoot, ".pi-talk-runtime", "venv", "bin", "python"), "supertonic[serve]==1.3.1"],

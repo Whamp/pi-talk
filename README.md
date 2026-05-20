@@ -22,6 +22,8 @@ If `uv` is missing, package setup fails with a clear error. Pi Talk does not ins
 
 ## Runtime setup
 
+Package setup shows an indeterminate progress bar while downloading Supertonic model files so first install does not look hung.
+
 Package setup creates:
 
 - **Pi Talk Runtime**: `<packageRoot>/.pi-talk-runtime/venv`

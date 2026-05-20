@@ -48,7 +48,7 @@ export async function setupPiTalkRuntime(options: RuntimeSetupOptions): Promise<
   await ops.mkdir(runtimeDir, { recursive: true });
   await ops.mkdir(options.modelCacheDir, { recursive: true });
 
-  await ops.execFile("uv", ["venv", "--python", "3.12", venvDir]);
+  await ops.execFile("uv", ["venv", "--clear", "--python", "3.12", venvDir]);
   const python = venvPythonPath(venvDir);
   const supertonic = venvExecutablePath(venvDir, "supertonic");
   await ops.execFile("uv", ["pip", "install", "--python", python, "supertonic[serve]==1.3.1"]);
