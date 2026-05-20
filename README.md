@@ -26,7 +26,7 @@ Package setup shows an indeterminate progress bar while downloading Supertonic m
 
 Package setup creates:
 
-- **Pi Talk Runtime**: `<packageRoot>/.pi-talk-runtime/venv`
+- **Pi Talk Runtime**: launched through `uv tool run --python 3.12 --from 'supertonic[serve]==1.3.1' supertonic ...`, using uv's shared tool/cache storage instead of a large package-local venv
 - **Runtime Manifest**: `<packageRoot>/.pi-talk-runtime/runtime-manifest.json`
 - **Model Cache**: OS-native per-user cache directory unless overridden
 

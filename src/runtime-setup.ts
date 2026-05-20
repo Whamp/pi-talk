@@ -20,6 +20,7 @@ export type RuntimeSetupOperations = {
 };
 
 export type RuntimeManifest = {
+  runtimeStrategy: "uv-tool-run";
   pythonVersion: "3.12";
   supertonicVersion: "1.3.1";
   model: "supertonic-3";
@@ -44,19 +45,15 @@ export async function setupPiTalkRuntime(options: RuntimeSetupOptions): Promise<
   }
 
   const runtimeDir = join(options.packageRoot, ".pi-talk-runtime");
-  const venvDir = join(runtimeDir, "venv");
   await ops.mkdir(runtimeDir, { recursive: true });
   await ops.mkdir(options.modelCacheDir, { recursive: true });
 
-  await ops.execFile("uv", ["venv", "--clear", "--python", "3.12", venvDir]);
-  const python = venvPythonPath(venvDir);
-  const supertonic = venvExecutablePath(venvDir, "supertonic");
-  await ops.execFile("uv", ["pip", "install", "--python", python, "supertonic[serve]==1.3.1"]);
-  await ops.execFile(supertonic, ["download"], {
+  await ops.execFile("uv", supertonicToolArgs("download"), {
     env: { ...process.env, SUPERTONIC_CACHE_DIR: options.modelCacheDir },
   });
 
   const manifest: RuntimeManifest = {
+    runtimeStrategy: "uv-tool-run",
     pythonVersion: "3.12",
     supertonicVersion: "1.3.1",
     model: options.config.runtime.model,
@@ -68,12 +65,8 @@ export async function setupPiTalkRuntime(options: RuntimeSetupOptions): Promise<
   return manifest;
 }
 
-export function venvExecutablePath(venvDir: string, executable: string): string {
-  return process.platform === "win32" ? join(venvDir, "Scripts", `${executable}.exe`) : join(venvDir, "bin", executable);
-}
-
-export function venvPythonPath(venvDir: string): string {
-  return process.platform === "win32" ? join(venvDir, "Scripts", "python.exe") : join(venvDir, "bin", "python");
+export function supertonicToolArgs(...supertonicArgs: string[]): string[] {
+  return ["tool", "run", "--python", "3.12", "--from", "supertonic[serve]==1.3.1", "supertonic", ...supertonicArgs];
 }
 
 export const nodeRuntimeSetupOperations: RuntimeSetupOperations = {

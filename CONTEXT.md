@@ -65,8 +65,8 @@ A tool that must already exist before **Complete Package Setup** can finish.
 _Avoid_: optional dependency, soft prerequisite
 
 **Pi Talk Runtime**:
-The package-managed Supertonic Python environment used by Pi Talk to run the **Supertonic Server** from inside the installed Pi Talk package.
-_Avoid_: user Python environment, global Supertonic install
+The uv-managed Supertonic Python execution path used by Pi Talk to run the **Supertonic Server** without installing Supertonic globally or storing a large venv inside the installed Pi Talk package.
+_Avoid_: user Python environment, global Supertonic install, package-local venv
 
 **Python Server Engine**:
 The v1 speech engine that runs Supertonic through a package-managed Python HTTP server.
@@ -77,7 +77,7 @@ The stable per-user cache directory where Supertonic model assets are stored.
 _Avoid_: package cache, runtime directory, Hugging Face cache
 
 **Runtime Manifest**:
-A package-local record of the installed **Pi Talk Runtime**, pinned versions, model, cache directory, and setup timestamp.
+A small package-local record of the **Pi Talk Runtime** command strategy, pinned versions, model, cache directory, and setup timestamp.
 _Avoid_: lock file, install log
 
 **Synthesis Endpoint**:
@@ -93,10 +93,10 @@ _Avoid_: OpenAI-compatible endpoint, speech API
 - **Quiet Control** interrupts active speech and clears pending **Queued Playback** but does not disable **Auto Speech Mode**.
 - **Talk Config** can be global or project-local; project-local settings override global settings.
 - The default **Playback Command** is automatic selection, preferring PipeWire-native playback when available.
-- **Complete Package Setup** creates or verifies the **Pi Talk Runtime** during package setup and downloads model assets into the **Model Cache**.
+- **Complete Package Setup** verifies the **Pi Talk Runtime** command path during package setup and downloads model assets into the **Model Cache**.
 - `uv` is a **Setup Requirement** for **Complete Package Setup**.
 - The **Pi Talk Runtime** is separate from the user's global Python environment.
-- The **Pi Talk Runtime** can be recreated during package setup or repair.
+- The **Pi Talk Runtime** is resolved through uv's shared tool/cache storage during package setup or repair.
 - The **Runtime Manifest** describes the current **Pi Talk Runtime** for diagnostics.
 - The **Python Server Engine** uses the **Pi Talk Runtime** to run the **Supertonic Server**.
 - The **Synthesis Endpoint** is Supertonic's native `POST /v1/tts` endpoint.
@@ -130,7 +130,7 @@ _Avoid_: OpenAI-compatible endpoint, speech API
 > **Domain expert:** "Use automatic selection: prefer `pw-play`, then fall back to `paplay`, `aplay`, `ffplay`, and `mpv`."
 >
 > **Dev:** "Should users manually install Supertonic after installing Pi Talk?"
-> **Domain expert:** "No — **Complete Package Setup** should provide a package-managed **Pi Talk Runtime** inside the installed package."
+> **Domain expert:** "No — **Complete Package Setup** should provide a uv-managed **Pi Talk Runtime** without a global Supertonic install."
 >
 > **Dev:** "Should v1 embed Supertonic directly in TypeScript?"
 > **Domain expert:** "No — v1 uses the **Python Server Engine** because it is the supported, lower-risk Supertonic integration."
@@ -165,5 +165,5 @@ _Avoid_: OpenAI-compatible endpoint, speech API
 - "model cache" could live in the package, Pi config tree, Supertonic defaults, Hugging Face cache, or an OS-native user cache — resolved: use a **Model Cache** with `PI_TALK_SUPERTONIC_CACHE_DIR`, then `talk.json`, then OS-native defaults (`$XDG_CACHE_HOME`/`~/.cache` on Linux and WSL, `~/Library/Caches` on macOS, `%LOCALAPPDATA%` on Windows).
 - "model download" could happen at install time or first speech request — resolved: v1 downloads the model during **Complete Package Setup**, with no skip option.
 - "uv" could be bundled, optional, or required — resolved: `uv` is a **Setup Requirement** and setup fails hard when it is missing.
-- "runtime version" could float or be pinned — resolved: v1 pins Python 3.12 and `supertonic[serve]==1.3.1`, and records setup in a **Runtime Manifest**.
+- "runtime version" could float or be pinned — resolved: v1 runs Supertonic through `uv tool run --python 3.12 --from 'supertonic[serve]==1.3.1'`, and records setup in a **Runtime Manifest**.
 - "speech endpoint" could mean Supertonic's native endpoint or the OpenAI-compatible alias — resolved: use native `POST /v1/tts` as the **Synthesis Endpoint**.

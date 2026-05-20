@@ -34,7 +34,7 @@ describe("Complete Package Setup", () => {
     expect(commands).toEqual([]);
   });
 
-  it("creates a package-local runtime, downloads the model, and writes a manifest", async () => {
+  it("uses uv's shared tool cache, downloads the model, and writes a small manifest", async () => {
     const packageRoot = tempDir("pi-talk-package-");
     const modelCacheDir = tempDir("pi-talk-model-cache-");
     const madeDirs: string[] = [];
@@ -59,15 +59,14 @@ describe("Complete Package Setup", () => {
 
     expect(madeDirs).toEqual([join(packageRoot, ".pi-talk-runtime"), modelCacheDir]);
     expect(commands.map(({ command, args }) => ({ command, args }))).toEqual([
-      { command: "uv", args: ["venv", "--clear", "--python", "3.12", join(packageRoot, ".pi-talk-runtime", "venv")] },
       {
         command: "uv",
-        args: ["pip", "install", "--python", join(packageRoot, ".pi-talk-runtime", "venv", "bin", "python"), "supertonic[serve]==1.3.1"],
+        args: ["tool", "run", "--python", "3.12", "--from", "supertonic[serve]==1.3.1", "supertonic", "download"],
       },
-      { command: join(packageRoot, ".pi-talk-runtime", "venv", "bin", "supertonic"), args: ["download"] },
     ]);
-    expect(commands[2].env?.SUPERTONIC_CACHE_DIR).toBe(modelCacheDir);
+    expect(commands[0].env?.SUPERTONIC_CACHE_DIR).toBe(modelCacheDir);
     expect(manifest).toEqual({
+      runtimeStrategy: "uv-tool-run",
       pythonVersion: "3.12",
       supertonicVersion: "1.3.1",
       model: "supertonic-3",

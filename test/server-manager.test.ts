@@ -10,7 +10,7 @@ function tempDir(prefix: string): string {
 }
 
 describe("Supertonic Server manager", () => {
-  it("lazy-starts the package-local server and waits for health readiness", async () => {
+  it("lazy-starts Supertonic from uv's shared tool cache and waits for health readiness", async () => {
     const packageRoot = tempDir("pi-talk-package-");
     const modelCacheDir = tempDir("pi-talk-cache-");
     const spawned: Array<{ command: string; args: string[]; env?: NodeJS.ProcessEnv }> = [];
@@ -37,8 +37,25 @@ describe("Supertonic Server manager", () => {
     await expect(manager.ensureReady()).resolves.toEqual({ baseUrl: "http://127.0.0.1:45678" });
     expect(spawned).toEqual([
       {
-        command: join(packageRoot, ".pi-talk-runtime", "venv", "bin", "supertonic"),
-        args: ["serve", "--host", "127.0.0.1", "--port", "45678", "--model", "supertonic-3", "--log-level", "info"],
+        command: "uv",
+        args: [
+          "tool",
+          "run",
+          "--python",
+          "3.12",
+          "--from",
+          "supertonic[serve]==1.3.1",
+          "supertonic",
+          "serve",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "45678",
+          "--model",
+          "supertonic-3",
+          "--log-level",
+          "info",
+        ],
         env: expect.objectContaining({ SUPERTONIC_CACHE_DIR: modelCacheDir }),
       },
     ]);

@@ -10,7 +10,6 @@ import { startProgress } from "./progress.mjs";
 const execFileAsync = promisify(execFile);
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const runtimeDir = join(packageRoot, ".pi-talk-runtime");
-const venvDir = join(runtimeDir, "venv");
 const manifestPath = join(runtimeDir, "runtime-manifest.json");
 const pythonVersion = "3.12";
 const supertonicVersion = "1.3.1";
@@ -27,9 +26,7 @@ async function main() {
   mkdirSync(runtimeDir, { recursive: true });
   mkdirSync(modelCacheDir, { recursive: true });
 
-  await run("uv", ["venv", "--clear", "--python", pythonVersion, venvDir]);
-  await run("uv", ["pip", "install", "--python", venvPythonPath(venvDir), `supertonic[serve]==${supertonicVersion}`]);
-  await run(venvExecutablePath(venvDir, "supertonic"), ["download"], {
+  await run("uv", supertonicToolArgs("download"), {
     env: { ...process.env, SUPERTONIC_CACHE_DIR: modelCacheDir },
     progressLabel: "Downloading Supertonic model (~385 MiB)",
   });
@@ -38,6 +35,7 @@ async function main() {
     manifestPath,
     `${JSON.stringify(
       {
+        runtimeStrategy: "uv-tool-run",
         pythonVersion,
         supertonicVersion,
         model,
@@ -132,12 +130,8 @@ function readJson(path) {
   }
 }
 
-function venvExecutablePath(venv, executable) {
-  return platform() === "win32" ? join(venv, "Scripts", `${executable}.exe`) : join(venv, "bin", executable);
-}
-
-function venvPythonPath(venv) {
-  return platform() === "win32" ? join(venv, "Scripts", "python.exe") : join(venv, "bin", "python");
+function supertonicToolArgs(...supertonicArgs) {
+  return ["tool", "run", "--python", pythonVersion, "--from", `supertonic[serve]==${supertonicVersion}`, "supertonic", ...supertonicArgs];
 }
 
 main().catch((error) => {

@@ -1,8 +1,7 @@
 import { spawn as nodeSpawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
-import { join } from "node:path";
 import type { TalkConfig } from "./config.js";
-import { venvExecutablePath } from "./runtime-setup.js";
+import { supertonicToolArgs } from "./runtime-setup.js";
 
 export type ManagedProcess = {
   kill(signal?: NodeJS.Signals): boolean;
@@ -43,10 +42,9 @@ export function createSupertonicServerManager(options: {
       const port = options.config.server.port === "auto" ? await ops.findFreePort() : options.config.server.port;
       baseUrl = `http://${options.config.server.host}:${port}`;
       if (!child) {
-        const command = venvExecutablePath(join(options.packageRoot, ".pi-talk-runtime", "venv"), "supertonic");
         child = ops.spawn(
-          command,
-          [
+          "uv",
+          supertonicToolArgs(
             "serve",
             "--host",
             options.config.server.host,
@@ -56,7 +54,7 @@ export function createSupertonicServerManager(options: {
             options.config.runtime.model,
             "--log-level",
             "info",
-          ],
+          ),
           { env: { ...processEnv(), SUPERTONIC_CACHE_DIR: options.modelCacheDir }, detached: process.platform !== "win32" },
         );
       }
