@@ -8,13 +8,18 @@ import { createSupertonicServerManager, type SupertonicServerManager } from "./s
 import { findPreviousAssistantMessage, extractSpeakableText, type SessionEntryLike } from "./speech-source.js";
 import { detectRuntimeStatus, formatTalkStatus } from "./status.js";
 import { synthesizeSpokenResponse } from "./synthesis-client.js";
+import { showTalkOverlay, type TalkOverlayOptions } from "./talk-overlay.js";
 
 const defaultPackageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 type CommandContextLike = {
   cwd: string;
+  hasUI?: boolean;
   sessionManager?: { getBranch(): unknown[] };
-  ui: { notify(message: string, level: "info" | "warning" | "error" | string): void };
+  ui: {
+    notify(message: string, level: "info" | "warning" | "error" | string): void;
+    custom?: unknown;
+  };
 };
 
 type CreatePiTalkExtensionOptions = {
@@ -24,6 +29,7 @@ type CreatePiTalkExtensionOptions = {
   synthesize?: (options: { baseUrl: string; text: string; config: LoadedTalkConfig["config"] }) => Promise<ArrayBuffer>;
   createPlaybackController?: (loaded: LoadedTalkConfig) => PlaybackController;
   doctor?: (options: { packageRoot: string; loaded: LoadedTalkConfig }) => Promise<string>;
+  showOverlay?: (options: TalkOverlayOptions) => Promise<void>;
 };
 
 export function createPiTalkExtension(options: CreatePiTalkExtensionOptions = {}) {
@@ -52,53 +58,28 @@ export function createPiTalkExtension(options: CreatePiTalkExtensionOptions = {}
       },
     });
 
+    pi.registerCommand("talk", {
+      description: "Open the Pi Talk control panel",
+      handler: async (_args, ctx) => {
+        const commandCtx = ctx as CommandContextLike;
+        const loaded = loadConfig(commandCtx.cwd);
+        await openOverlay(commandCtx, loaded);
+      },
+    });
+
+    pi.registerCommand("speak", {
+      description: "Speak the previous assistant response with Pi Talk",
+      handler: async (_args, ctx) => {
+        const commandCtx = ctx as CommandContextLike;
+        await speakPreviousResponse(commandCtx, loadConfig(commandCtx.cwd));
+      },
+    });
+
     pi.registerCommand("quiet", {
       description: "Interrupt Pi Talk speech and clear queued playback",
       handler: async (_args, ctx) => {
         const commandCtx = ctx as CommandContextLike;
         quiet(commandCtx, loadConfig(commandCtx.cwd));
-      },
-    });
-
-    pi.registerCommand("talk", {
-      description: "Control Pi Talk spoken assistant responses",
-      handler: async (args, ctx) => {
-        const commandCtx = ctx as CommandContextLike;
-        const action = args.trim() || "speak";
-        const loaded = loadConfig(commandCtx.cwd);
-
-        if (action === "status") {
-          commandCtx.ui.notify(
-            formatTalkStatus({ ...loaded, config: { ...loaded.config, autoSpeech: { enabled: autoSpeechEnabled } } }, detectRuntimeStatus(packageRoot)),
-            "info",
-          );
-          return;
-        }
-
-        if (action === "doctor") {
-          const report = await (options.doctor ?? buildDoctorReport)({ packageRoot, loaded });
-          commandCtx.ui.notify(report, "info");
-          return;
-        }
-
-        if (action === "on") {
-          autoSpeechEnabled = true;
-          commandCtx.ui.notify("Pi Talk: Auto Speech Mode on.", "info");
-          return;
-        }
-
-        if (action === "off") {
-          autoSpeechEnabled = false;
-          commandCtx.ui.notify("Pi Talk: Auto Speech Mode off.", "info");
-          return;
-        }
-
-        if (action === "speak") {
-          await speakPreviousResponse(commandCtx, loaded);
-          return;
-        }
-
-        commandCtx.ui.notify(`Unknown Pi Talk command: ${action}`, "warning");
       },
     });
 
@@ -108,6 +89,24 @@ export function createPiTalkExtension(options: CreatePiTalkExtensionOptions = {}
       await speakMessage(commandCtx, loadConfig(commandCtx.cwd), (event as { message?: unknown }).message);
     });
   };
+
+  async function openOverlay(ctx: CommandContextLike, loaded: LoadedTalkConfig): Promise<void> {
+    const effectiveLoaded = effectiveStatusConfig(loaded);
+    const overlayOptions: TalkOverlayOptions = {
+      ctx: ctx as never,
+      autoSpeechEnabled,
+      status: formatTalkStatus(effectiveLoaded, detectRuntimeStatus(packageRoot)),
+      doctor: () => (options.doctor ?? buildDoctorReport)({ packageRoot, loaded: effectiveLoaded }),
+      speak: () => speakPreviousResponse(ctx, loaded),
+      quiet: () => quiet(ctx, loaded),
+      setAutoSpeechEnabled: (enabled) => {
+        autoSpeechEnabled = enabled;
+        ctx.ui.notify(`Pi Talk: Auto Speech Mode ${enabled ? "on" : "off"}.`, "info");
+      },
+    };
+
+    await (options.showOverlay ?? showTalkOverlay)(overlayOptions);
+  }
 
   async function speakPreviousResponse(ctx: CommandContextLike, loaded: LoadedTalkConfig): Promise<void> {
     const message = findPreviousAssistantMessage((ctx.sessionManager?.getBranch() ?? []) as SessionEntryLike[]);
@@ -138,6 +137,10 @@ export function createPiTalkExtension(options: CreatePiTalkExtensionOptions = {}
     playbackController ??= (options.createPlaybackController ?? defaultCreatePlaybackController)(loaded);
     playbackController.quiet();
     ctx.ui.notify("Pi Talk: quiet.", "info");
+  }
+
+  function effectiveStatusConfig(loaded: LoadedTalkConfig): LoadedTalkConfig {
+    return { ...loaded, config: { ...loaded.config, autoSpeech: { enabled: autoSpeechEnabled } } };
   }
 
   function defaultCreateServerManager(loaded: LoadedTalkConfig): SupertonicServerManager {

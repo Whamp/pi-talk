@@ -4,14 +4,12 @@ Pi Talk is a Pi package/extension for turning assistant responses into local spe
 
 ## What works
 
-- `/talk` speaks the previous assistant response.
-- `/talk status` reports effective Pi Talk state.
-- `/talk doctor` reports setup and runtime diagnostics.
-- `/talk on` enables **Auto Speech Mode** for future assistant responses.
-- `/talk off` disables **Auto Speech Mode**.
+- `/talk` opens the Pi Talk TUI overlay/control panel.
+- `/speak` speaks the previous assistant response.
 - `/quiet` interrupts current speech and clears pending queued playback.
-- Default **Talk Keybinding**: `ctrl+shift+s`.
-- Default **Quiet Control** keybinding: `ctrl+shift+q`.
+- The Pi Talk overlay hosts status, doctor diagnostics, **Auto Speech Mode**, configuration, and customization activities.
+- Default **Talk Keybinding**: `ctrl+shift+s` (same behavior as `/speak`).
+- Default **Quiet Control** keybinding: `ctrl+shift+q` (same behavior as `/quiet`).
 - Speech uses visible assistant text only; thinking, tool calls, and tool results are excluded.
 - Playback defaults to **Interrupt Playback** and can be configured for **Queued Playback**.
 - `pi install` runs **Complete Package Setup** through `scripts/setup-runtime.mjs`.
@@ -86,7 +84,7 @@ npm run typecheck
 node --check scripts/setup-runtime.mjs
 ```
 
-The automated test suite uses TDD-style module-contract tests with fake process, HTTP, filesystem, and playback boundaries.
+The automated test suite uses TDD-style module-contract tests with fake process, HTTP, filesystem, TUI overlay, and playback boundaries.
 
 ## Design notes
 

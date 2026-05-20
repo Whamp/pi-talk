@@ -3,20 +3,29 @@
   "version": "0.1.0",
   "description": "Pi extension for turning assistant responses into local speech with Supertonic.",
   "type": "module",
-  "keywords": ["pi-package", "pi", "tts", "supertonic"],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "tts",
+    "supertonic"
+  ],
   "scripts": {
     "postinstall": "node ./scripts/setup-runtime.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "pi": {
-    "extensions": ["./src/index.ts"]
+    "extensions": [
+      "./src/index.ts"
+    ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*"
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.75.4",
+    "@earendil-works/pi-tui": "^0.75.4",
     "@types/node": "^24.10.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
