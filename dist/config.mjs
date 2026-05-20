@@ -4,8 +4,8 @@ import { join, resolve } from "node:path";
 export const DEFAULT_TALK_CONFIG = {
     autoSpeech: { enabled: false },
     keybindings: {
-        talk: "ctrl+shift+s",
-        quiet: "ctrl+shift+q",
+        talk: "alt+s",
+        quiet: "alt+q",
     },
     playback: {
         command: "auto",

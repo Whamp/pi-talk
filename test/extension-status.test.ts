@@ -98,8 +98,8 @@ describe("Pi Talk extension commands", () => {
         status: [
           "Pi Talk status",
           "Auto Speech Mode: off",
-          "Talk Keybinding: ctrl+shift+s",
-          "Quiet Control: ctrl+shift+q",
+          "Talk Keybinding: alt+s",
+          "Quiet Control: alt+q",
           "Playback overlap: interrupt",
           "Playback command: auto",
           "Voice: M1",
@@ -192,14 +192,14 @@ describe("Pi Talk extension commands", () => {
       }),
     })(fake.pi as never);
 
-    expect([...fake.shortcuts.keys()].sort()).toEqual(["ctrl+shift+q", "ctrl+shift+s"]);
+    expect([...fake.shortcuts.keys()].sort()).toEqual(["alt+q", "alt+s"]);
 
     const ctx = createFakeContext("/project", [
       { type: "message", message: { role: "assistant", content: [{ type: "text", text: "spoken" }] } },
     ]);
-    await fake.shortcuts.get("ctrl+shift+s")!.handler(ctx);
+    await fake.shortcuts.get("alt+s")!.handler(ctx);
     await fake.commands.get("quiet")!.handler("", ctx);
-    await fake.shortcuts.get("ctrl+shift+q")!.handler(ctx);
+    await fake.shortcuts.get("alt+q")!.handler(ctx);
 
     expect(quietCount).toBe(2);
     expect(ctx.ui.notifications.at(-1)).toEqual({ level: "info", message: "Pi Talk: quiet." });

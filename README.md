@@ -8,8 +8,8 @@ Pi Talk is a Pi package/extension for turning assistant responses into local spe
 - `/speak` speaks the previous assistant response.
 - `/quiet` interrupts current speech and clears pending queued playback.
 - The Pi Talk overlay hosts status, doctor diagnostics, **Auto Speech Mode**, configuration, and customization activities.
-- Default **Talk Keybinding**: `ctrl+shift+s` (same behavior as `/speak`).
-- Default **Quiet Control** keybinding: `ctrl+shift+q` (same behavior as `/quiet`).
+- Default **Talk Keybinding**: `alt+s` (same behavior as `/speak`).
+- Default **Quiet Control** keybinding: `alt+q` (same behavior as `/quiet`).
 - Speech uses visible assistant text only; thinking, tool calls, and tool results are excluded.
 - Playback defaults to **Interrupt Playback** and can be configured for **Queued Playback**.
 - `pi install` runs **Complete Package Setup** through `scripts/setup-runtime.mjs`.
@@ -61,8 +61,8 @@ Example:
     "onOverlap": "interrupt"
   },
   "keybindings": {
-    "talk": "ctrl+shift+s",
-    "quiet": "ctrl+shift+q"
+    "talk": "alt+s",
+    "quiet": "alt+q"
   },
   "runtime": {
     "modelCacheDir": "/optional/custom/cache"

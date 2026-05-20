@@ -154,7 +154,7 @@ _Avoid_: OpenAI-compatible endpoint, speech API
 
 - "autostart" could mean starting the server at Pi launch or starting it on first speech request — resolved: use **Lazy Autostart** for first speech request, not Pi startup.
 - "trigger" could mean a keybinding, slash command, or always-on behavior — resolved: the **Talk Keybinding** and `/talk` both provide a **Manual Speech Trigger**; `/talk on` and `/talk off` control **Auto Speech Mode**.
-- `ctrl+shift+s` was checked against active Omarchy/Hyprland, terminal, and Pi keybinding config; no conflict was found, so it is the default **Talk Keybinding**.
+- `alt+s` is the default **Talk Keybinding** after `ctrl+shift+s` conflicted with pi-web-access' curator shortcut; `alt+q` is the default **Quiet Control**.
 - "previous assistant response" could include visible text, thinking, tool calls, or tool results — resolved: **Spoken Response** uses **Speakable Text** only.
 - "overlap" could mean interrupt, queue, or ignore new requests — resolved: default to **Interrupt Playback**, with v1 config support for **Queued Playback**.
 - "quiet" could mean interrupt current speech, clear queued speech, or disable automatic speech — resolved: **Quiet Control** interrupts active speech and clears pending **Queued Playback**; `/talk off` disables **Auto Speech Mode**.
