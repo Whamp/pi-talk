@@ -1,0 +1,19 @@
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Pi Talk generated runtime/cache artifacts
+.pi-talk-runtime/
+*.wav
+*.flac
+*.ogg
+
+# Local env/editor noise
+.env
+.env.*
+!.env.example
+.DS_Store
+.vscode/
+.idea/
