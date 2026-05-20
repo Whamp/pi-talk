@@ -10,13 +10,15 @@
     "supertonic"
   ],
   "scripts": {
+    "build": "node ./scripts/build-dist.mjs",
     "postinstall": "node ./scripts/setup-runtime.mjs",
+    "prepack": "npm run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "pi": {
     "extensions": [
-      "./src/index.ts"
+      "./dist/index.cjs"
     ]
   },
   "peerDependencies": {

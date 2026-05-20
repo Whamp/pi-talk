@@ -1,5 +1,3 @@
-import { matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-
 type OverlayContext = {
   hasUI?: boolean;
   ui: {
@@ -147,6 +145,27 @@ class TalkOverlayComponent {
   private bold(text: string): string {
     return this.options.theme.bold?.(text) ?? text;
   }
+}
+
+function matchesKey(data: string, key: string): boolean {
+  if (key === "escape") return data === "\u001B";
+  if (key === "ctrl+c") return data === "\u0003";
+  if (key === "up") return data === "\u001B[A";
+  if (key === "down") return data === "\u001B[B";
+  if (key === "enter") return data === "\r" || data === "\n";
+  if (key === "return") return data === "\r" || data === "\n";
+  return false;
+}
+
+function truncateToWidth(value: string, width: number, ellipsis = "…", _ansiAware = true): string {
+  if (visibleWidth(value) <= width) return value;
+  const plain = stripAnsi(value);
+  const suffix = width > 0 ? ellipsis : "";
+  return `${plain.slice(0, Math.max(0, width - visibleWidth(suffix)))}${suffix}`;
+}
+
+function visibleWidth(value: string): number {
+  return Array.from(stripAnsi(value)).length;
 }
 
 function stripAnsi(value: string): string {
