@@ -4,9 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 const progress = await import("../scripts/progress.mjs");
 
 describe("install progress output", () => {
-  it("formats an indeterminate progress bar with elapsed seconds", () => {
-    expect(progress.formatProgressLine("Downloading Supertonic model (~385 MiB)", 4, 12_345)).toBe(
-      "[pi-talk setup] Downloading Supertonic model (~385 MiB) [█████─────────────] 12s",
+  it("formats an estimated progress bar from elapsed time without resetting", () => {
+    expect(progress.formatProgressLine("Downloading Supertonic model (~385 MiB)", 12_345)).toBe(
+      "[pi-talk setup] Downloading Supertonic model (~385 MiB) [████──────────────] 12s",
+    );
+    expect(progress.formatProgressLine("Downloading Supertonic model (~385 MiB)", 49_000)).toBe(
+      "[pi-talk setup] Downloading Supertonic model (~385 MiB) [█████████████████─] 49s",
+    );
+    expect(progress.formatProgressLine("Downloading Supertonic model (~385 MiB)", 90_000)).toBe(
+      "[pi-talk setup] Downloading Supertonic model (~385 MiB) [█████████████████─] 90s",
     );
   });
 
